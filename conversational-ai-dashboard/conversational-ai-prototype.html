@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversational AI Business Dashboard - Prototype</title>
+    <!-- Plotly.js for interactive charts -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        /* Dark modern theme */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e6ed;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(135deg, #00d4ff, #7b42f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            color: #a0a8b0;
+        }
+
+        /* CSV Upload Section */
+        .upload-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.1);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        #csv-upload {
+            opacity: 0;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 20px 40px;
+            background: linear-gradient(135deg, #00d4ff, #7b42f6);
+            color: white;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 212, 255, 0.4);
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .status.success { background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; }
+        .status.error { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; }
+
+        /* Chat Section */
+        .chat-section {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chat-messages {
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 15px 20px;
+            border-radius: 18px;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .ai-message {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 15px;
+        }
+
+        #query-input {
+            flex: 1;
+            padding: 18px 25px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            color: #e0e6ed;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #query-input:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        #query-input::placeholder {
+            color: #a0a8b0;
+        }
+
+        .btn {
+            padding: 18px 30px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #7b42f6);
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 212, 255, 0.4);
+        }
+
+        /* Chart Section */
+        .chart-section {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+            height: 600px;
+        }
+
+        #chart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .no-chart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #a0a8b0;
+            font-size: 1.1rem;
+        }
+
+        .no-chart svg {
+            width: 80px;
+            height: 80px;
+            opacity: 0.5;
+            margin-bottom: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            h1 { font-size: 2rem; }
+            .chat-input-container { flex-direction: column; }
+            .chart-section { height: 400px; padding: 20px; }
+        }
+
+        /* Scrollbar */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.3);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header>
+            <h1>🤖 Conversational AI Dashboard</h1>
+            <p class="subtitle">Upload CSV • Ask Questions • Visualize Instantly</p>
+        </header>
+
+        <!-- CSV Upload Section -->
+        <section class="upload-section">
+            <div class="file-input-wrapper">
+                <input type="file" id="csv-upload" accept=".csv" />
+                <label for="csv-upload" class="file-input-label">
+                    📁 Choose CSV File or Drag & Drop
+                </label>
+            </div>
+            <div id="upload-status" class="status" style="display: none;"></div>
+        </section>
+
+        <!-- Chat Section -->
+        <section class="chat-section">
+            <div id="chat-messages" class="chat-messages">
+                <div class="message ai-message">
+                    <strong>AI:</strong> Ready! Upload a CSV or use sample data. Try: "sales by region", "revenue by product", "show trends"
+                </div>
+            </div>
+            <div class="chat-input-container">
+                <input type="text" id="query-input" placeholder="Ask about your data... (e.g., 'sales by region')" />
+                <button id="send-btn" class="btn btn-primary">
+                    🚀 Analyze
+                </button>
+            </div>
+        </section>
+
+        <!-- Chart Output Section -->
+        <section class="chart-section">
+            <div id="chart-container">
+                <div class="no-chart">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M5 19a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4l2.05-2.05a1 1 0 0 1 1.38 0L17 5h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5zM6 8v8h6v-2h2V8H6zm9 6H9v-2h6v2z"/>
+                    </svg>
+                    <div>Upload CSV and ask a question to see interactive charts</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Sample data fallback
+        const SAMPLE_DATA = [
+            {date: '2024-01-01', region: 'North', product: 'CRM', units: 100, sales: 25, revenue: 25000},
+            {date: '2024-01-01', region: 'North', product: 'Email', units: 80, sales: 20, revenue: 16000},
+            {date: '2024-01-01', region: 'South', product: 'CRM', units: 120, sales: 30, revenue: 30000},
+            {date: '2024-01-01', region: 'South', product: 'Email', units: 90, sales: 22, revenue: 19800},
+            {date: '2024-01-02', region: 'North', product: 'CRM', units: 110, sales: 28, revenue: 27500},
+            {date: '2024-01-02', region: 'North', product: 'Email', units: 75, sales: 19, revenue: 15200},
+            {date: '2024-01-02', region: 'South', product: 'CRM', units: 130, sales: 32, revenue: 32500},
+            {date: '2024-01-02', region: 'South', product: 'Email', units: 85, sales: 21, revenue: 18700},
+            {date: '2024-01-03', region: 'North', product: 'CRM', units: 95, sales: 24, revenue: 23750},
+            {date: '2024-01-03', region: 'North', product: 'Email', units: 82, sales: 20, revenue: 16400},
+            {date: '2024-01-03', region: 'South', product: 'CRM', units: 115, sales: 29, revenue: 28750},
+            {date: '2024-01-03', region: 'South', product: 'Email', units: 88, sales: 23, revenue: 20050}
+        ];
+
+        class Dashboard {
+            constructor() {
+                // DOM elements
+                this.csvUpload = document.getElementById('csv-upload');
+                this.queryInput = document.getElementById('query-input');
+                this.sendBtn = document.getElementById('send-btn');
+                this.chatMessages = document.getElementById('chat-messages');
+                this.chartContainer = document.getElementById('chart-container');
+                this.uploadStatus = document.getElementById('upload-status');
+
+                // State
+                this.data = SAMPLE_DATA;
+                this.currentChart = null;
+
+                // Initialize
+                this.initSampleData();
+                this.bindEvents();
+            }
+
+            // Initialize with sample data message
+            initSampleData() {
+                this.addMessage('AI', '✅ Loaded sample sales data. Ask: "sales by region", "revenue by product", "units over time"');
+            }
+
+            // Bind event listeners
+            bindEvents() {
+                this.csvUpload.addEventListener('change', (e) => this.handleCSVUpload(e));
+                this.sendBtn.addEventListener('click', () => this.processQuery());
+                this.queryInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.processQuery();
+                });
+            }
+
+            // Handle CSV file upload and parsing
+            handleCSVUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        this.data = this.parseCSV(e.target.result);
+                        this.showStatus('✅ CSV loaded successfully! ' + this.data.length + ' rows', 'success');
+                        this.clearChart();
+                        this.addMessage('AI', `📊 Loaded ${this.data.length} rows. Ready for analysis!`);
+                    } catch (error) {
+                        this.showStatus('❌ Error parsing CSV: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // Parse CSV string to array of objects
+            parseCSV(csvText) {
+                const lines = csvText.trim().split('\n');
+                if (lines.length < 2) throw new Error('Invalid CSV: no data rows');
+
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                return lines.slice(1).map(line => {
+                    const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+                    return headers.reduce((obj, header, i) => {
+                        obj[header] = isNaN(values[i]) ? values[i] : parseFloat(values[i]);
+                        return obj;
+                    }, {});
+                }).filter(row => Object.values(row).some(v => v !== ''));
+            }
+
+            // Process natural language query
+            processQuery() {
+                const query = this.queryInput.value.trim();
+                if (!query) return;
+
+                // Add user message
+                this.addMessage('User', query);
+                this.queryInput.value = '';
+
+                // Process query
+                const result = this.analyzeQuery(query);
+                this.addMessage('AI', result.text);
+
+                // Render chart if available
+                if (result.chartData) {
+                    this.renderChart(result.chartData, result.chartType, result.title);
+                }
+            }
+
+            // Analyze natural language query and return structured data
+            analyzeQuery(query) {
+                const q = query.toLowerCase();
+                let groupBy = null, metric = 'sales', chartType = 'bar', title = '';
+
+                // Detect grouping
+                if (q.includes('region') || q.includes('area')) groupBy = 'region';
+                else if (q.includes('product') || q.includes('item')) groupBy = 'product';
+                else if (q.includes('date') || q.includes('time') || q.includes('trend')) {
+                    groupBy = 'date';
+                    chartType = 'scatter';
+                }
+
+                // Detect metric
+                if (q.includes('revenue')) metric = 'revenue';
+                else if (q.includes('unit')) metric = 'units';
+
+                // Fallback grouping
+                if (!groupBy) {
+                    const commonFields = ['region', 'product', 'date'].find(field => 
+                        this.data[0] && field in this.data[0]
+                    );
+                    groupBy = commonFields || Object.keys(this.data[0] || {})[0];
+                }
+
+                if (!this.data[0] || !(groupBy in this.data[0]) || !(metric in this.data[0])) {
+                    return { text: 'No suitable data fields found for analysis', chartData: null };
+                }
+
+                // Aggregate data
+                const aggregated = this.aggregateData(groupBy, metric);
+                title = `${metric} by ${groupBy}`;
+
+                const text = this.formatResult(aggregated, groupBy, metric);
+
+                return {
+                    text,
+                    chartData: { x: aggregated.map(d => d[groupBy]), y: aggregated.map(d => d.total) },
+                    chartType,
+                    title
+                };
+            }
+
+            // Aggregate data by group
+            aggregateData(groupBy, metric) {
+                const groups = {};
+                this.data.forEach(row => {
+                    const key = row[groupBy];
+                    if (!groups[key]) {
+                        groups[key] = { [groupBy]: key, total: 0, count: 0 };
+                    }
+                    groups[key].total += (row[metric] || 0);
+                    groups[key].count += 1;
+                });
+
+                return Object.values(groups)
+                    .sort((a, b) => b.total - a.total)
+                    .slice(0, 10);
+            }
+
+            // Format analysis result as text
+            formatResult(data, groupBy, metric) {
+                let text = `**${metric.toUpperCase()} by ${groupBy.toUpperCase()}**\n\n`;
+                data.slice(0, 5).forEach((item, i) => {
+                    text += `${i+1}. ${item[groupBy]}: ${item.total.toLocaleString()}\n`;
+                });
+                if (data.length > 5) text += `\n... +${data.length-5} more`;
+                text += `\n\n**Total: ${data.reduce((sum, d) => sum + d.total, 0).toLocaleString()}**`;
+                return text;
+            }
+
+            // Render interactive Plotly chart
+            renderChart(data, chartType, title) {
+                this.clearChart();
+
+                const layout = {
+                    title: {
+                        text: title,
+                        font: { size: 24, color: '#e0e6ed' }
+                    },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: '#e0e6ed' },
+                    xaxis: { 
+                        gridcolor: 'rgba(255,255,255,0.1)',
+                        title: { font: { size: 14 } }
+                    },
+                    yaxis: {
+                        gridcolor: 'rgba(255,255,255,0.1)',
+                        title: { font: { size: 14 } }
+                    },
+                    height: 550,
+                    margin: { l: 60, r: 20, t: 60, b: 60 }
+                };
+
+                const config = {
+                    displayModeBar: true,
+                    modeBarButtonToRemove: ['pan2d', 'lasso2d', 'select2d'],
+                    displaylogo: false
+                };
+
+                let traces = [{
+                    x: data.x,
+                    y: data.y,
+                    type: chartType === 'scatter' ? 'scatter' : 'bar',
+                    marker: { 
+                        color: chartType === 'scatter' ? '#7b42f6' : '#00d4ff',
+                        size: 8
+                    },
+                    line: { color: '#00d4ff', width: 3 },
+                    text: data.y.map(y => y.toLocaleString()),
+                    textposition: 'auto',
+                    hovertemplate: '%{x}: <b>%{y:,.0f}</b><extra></extra>'
+                }];
+
+                Plotly.newPlot('chart-container', traces, layout, config);
+            }
+
+            // Clear existing chart
+            clearChart() {
+                Plotly.purge(this.chartContainer);
+                const noChart = document.createElement('div');
+                noChart.className = 'no-chart';
+                noChart.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M5 19a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4l2.05-2.05a1 1 0 0 1 1.38 0L17 5h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5zM6 8v8h6v-2h2V8H6zm9 6H9v-2h6v2z"/>
+                    </svg>
+                    <div>Ask a question to see interactive charts here</div>
+                `;
+                this.chartContainer.innerHTML = '';
+                this.chartContainer.appendChild(noChart);
+            }
+
+            // Add message to chat
+            addMessage(sender, text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender === 'User' ? 'user-message' : 'ai-message'}`;
+                messageDiv.innerHTML = `<strong>${sender}:</strong> ${this.formatText(text)}`;
+                this.chatMessages.appendChild(messageDiv);
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+
+            // Format text with basic markdown support
+            formatText(text) {
+                return text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+            }
+
+            // Show upload status
+            showStatus(message, type) {
+                this.uploadStatus.textContent = message;
+                this.uploadStatus.className = `status ${type}`;
+                this.uploadStatus.style.display = 'block';
+                setTimeout(() => {
+                    this.uploadStatus.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Initialize dashboard when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new Dashboard();
+        });
+    </script>
+</body>
+</html>
+

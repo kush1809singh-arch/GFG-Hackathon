@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversational AI Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Conversational AI Business Dashboard</h1>
+        </header>
+        
+        <div class="upload-section">
+            <input type="file" id="csv-upload" accept=".csv" />
+            <button id="upload-btn">Upload CSV</button>
+        </div>
+        
+        <div class="chat-section">
+            <div id="chat-history"></div>
+            <div class="chat-input">
+                <input type="text" id="query-input" placeholder="Ask about your data... e.g., 'show sales by region'">
+                <button id="send-query">Send</button>
+            </div>
+        </div>
+        
+        <div class="charts-section">
+            <canvas id="chart-canvas"></canvas>
+        </div>
+    </div>
+    
+    <script src="../js/main.js"></script>
+    <script src="../js/csv-parser.js"></script>
+    <script src="../js/query-processor.js"></script>
+    <script src="../js/chart-renderer.js"></script>
+</body>
+</html>
+
