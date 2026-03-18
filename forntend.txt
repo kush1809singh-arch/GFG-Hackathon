@@ -1,0 +1,54 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+
+st.set_page_config(page_title="AI Dashboard", layout="wide")
+
+st.title("🤖 Conversational AI Dashboard")
+
+# Upload CSV
+uploaded_file = st.file_uploader("📂 Upload CSV", type=["csv"])
+
+if uploaded_file:
+    df = pd.read_csv(uploaded_file)
+else:
+    st.info("Using default sample data")
+    df = pd.DataFrame({
+        "region": ["East", "West", "North", "South"],
+        "sales": [100, 200, 150, 300],
+        "product": ["A", "B", "A", "C"]
+    })
+
+# Show data
+st.subheader("📊 Data Preview")
+st.dataframe(df)
+
+# User query
+query = st.text_input("💬 Ask your data (e.g., sales by region)")
+
+# Simple logic-based AI (for prototype)
+if query:
+    query = query.lower()
+
+    if "region" in query:
+        result = df.groupby("region")["sales"].sum().reset_index()
+        st.subheader("📈 Sales by Region")
+        fig = px.bar(result, x="region", y="sales")
+        st.plotly_chart(fig, use_container_width=True)
+
+    elif "product" in query:
+        result = df.groupby("product")["sales"].sum().reset_index()
+        st.subheader("📈 Sales by Product")
+        fig = px.pie(result, names="product", values="sales")
+        st.plotly_chart(fig, use_container_width=True)
+
+    elif "trend" in query or "time" in query:
+        if "date" in df.columns:
+            result = df.groupby("date")["sales"].sum().reset_index()
+            fig = px.line(result, x="date", y="sales")
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning("No date column found")
+
+    else:
+        st.warning("❌ समझ नहीं आया — try: 'sales by region' or 'sales by product'")
